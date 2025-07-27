@@ -1,53 +1,50 @@
-//install wrangle and init a project to initialize the worker
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 
-//add the code given below in index.js
+const app = new Hono()
 
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-
-const app = new Hono();
-
+// Enable CORS
 app.use(
-	'*',
-	cors({
-		origin: '*',
-		allowHeaders: '*',
-		allowMethods: ['GET', 'OPTIONS'],
-		maxAge: 600,
-	})
-);
+  '*',
+  cors({
+    origin: '*',
+    allowHeaders: '*',
+    allowMethods: ['GET', 'OPTIONS'],
+    maxAge: 600,
+  })
+)
 
+// Proxy handler
 app.all('*', async (c) => {
-	const targetUrl = c.req.query('url');
-	if (!targetUrl) {
-		return c.text('Missing target URL', 400);
-	}
+  const targetUrl = c.req.query('url')
+  if (!targetUrl) {
+    return c.text('Missing target URL', 400)
+  }
 
-	const url = new URL(targetUrl);
-	const targetRequest = new Request(url, {
-		method: c.req.method,
-		headers: c.req.headers,
-		body: ['GET', 'HEAD'].includes(c.req.method) ? null : c.req.body,
-	});
+  try {
+    const url = new URL(targetUrl)
+    const targetRequest = new Request(url, {
+      method: c.req.method,
+      headers: c.req.headers,
+      body: ['GET', 'HEAD'].includes(c.req.method) ? null : c.req.body,
+    })
 
-	const response = await fetch(targetRequest);
+    const response = await fetch(targetRequest)
 
-	const newHeaders = new Headers(response.headers);
-	newHeaders.set('Access-Control-Allow-Origin', '*');
-	newHeaders.set('Access-Control-Allow-Methods', '*');
-	newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+    // Modify response headers
+    const newHeaders = new Headers(response.headers)
+    newHeaders.set('Access-Control-Allow-Origin', '*')
+    newHeaders.set('Access-Control-Allow-Methods', '*')
+    newHeaders.set('Access-Control-Allow-Headers', 'Content-Type')
 
-	return new Response(response.body, {
-		status: response.status,
-		headers: newHeaders,
-	});
-});
+    return new Response(response.body, {
+      status: response.status,
+      headers: newHeaders,
+    })
+  } catch (err) {
+    return c.text(`Proxy Error: ${err.message}`, 500)
+  }
+})
 
-export default app;
-
-// add name of your project (can be any) in wrangler.toml file
-
-//run npx wrangler publish 
-// your reversed proxy server is now hosted
-// to use the proxy make request like this structure given below
-//https://workername.workers.dev/?url=https://<website_name>
+// Export for Cloudflare Pages Functions
+export const onRequest = app.fetch
