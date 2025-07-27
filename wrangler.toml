@@ -1,7 +1,12 @@
 name = "corss"
-compatibility_date = "2025-07-27"
+compatibility_date = "2024-07-27"
 
-main = "src/index.ts"
+[build]
+command = "npx wrangler deploy"
 
-# If you are using modules (recommended for Hono)
-compatibility_flags = ["modules"]
+[site]
+bucket = "./public"
+
+[[routes]]
+pattern = "/*"
+zone_name = "yourdomain.com"  # Optional for custom domain
