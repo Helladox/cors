@@ -9,4 +9,4 @@ bucket = "./public"
 
 [[routes]]
 pattern = "/*"
-zone_name = "yourdomain.com"  # Optional for custom domain
+zone_name = ""  # Optional for custom domain
