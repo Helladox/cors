@@ -1,0 +1,7 @@
+name = "my-worker"
+compatibility_date = "2025-07-27"
+
+main = "src/index.ts"
+
+# If you are using modules (recommended for Hono)
+compatibility_flags = ["modules"]
