@@ -1,28 +1,41 @@
-export async function onRequest(context) {
-  const { request } = context
-  const urlParam = new URL(request.url).searchParams.get("url")
+import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 
-  if (!urlParam) {
-    return new Response("Missing target URL", { status: 400 })
+const app = new Hono()
+
+app.use(
+  '*',
+  cors({
+    origin: '*',
+    allowHeaders: '*',
+    allowMethods: ['GET', 'OPTIONS'],
+    maxAge: 600,
+  })
+)
+
+app.all('*', async (c) => {
+  const targetUrl = c.req.query('url')
+  if (!targetUrl) {
+    return c.text('Missing target URL', 400)
   }
 
-  try {
-    const targetResponse = await fetch(urlParam, {
-      method: request.method,
-      headers: request.headers,
-      body: request.method !== "GET" && request.method !== "HEAD" ? request.body : null,
-    })
+  const url = new URL(targetUrl)
+  const targetRequest = new Request(url, {
+    method: c.req.method,
+    headers: c.req.headers,
+    body: ['GET', 'HEAD'].includes(c.req.method) ? null : c.req.body,
+  })
 
-    const headers = new Headers(targetResponse.headers)
-    headers.set("Access-Control-Allow-Origin", "*")
-    headers.set("Access-Control-Allow-Methods", "*")
-    headers.set("Access-Control-Allow-Headers", "*")
+  const response = await fetch(targetRequest)
+  const newHeaders = new Headers(response.headers)
+  newHeaders.set('Access-Control-Allow-Origin', '*')
+  newHeaders.set('Access-Control-Allow-Methods', '*')
+  newHeaders.set('Access-Control-Allow-Headers', '*')
 
-    return new Response(targetResponse.body, {
-      status: targetResponse.status,
-      headers,
-    })
-  } catch (err) {
-    return new Response("Error fetching target URL: " + err.message, { status: 500 })
-  }
-}
+  return new Response(response.body, {
+    status: response.status,
+    headers: newHeaders,
+  })
+})
+
+export default app
