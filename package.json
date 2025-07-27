@@ -1,0 +1,7 @@
+{
+  "name": "cors-proxy-hono",
+  "type": "module",
+  "dependencies": {
+    "hono": "^3.11.7"
+  }
+}
