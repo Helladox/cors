@@ -1,4 +1,4 @@
-name = "my-worker"
+name = "corss"
 compatibility_date = "2025-07-27"
 
 main = "src/index.ts"
